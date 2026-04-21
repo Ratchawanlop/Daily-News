@@ -75,4 +75,4 @@
 - **ศุภชัย สังข์ศิรินทร์ (Supachai Sungsirin)**
 - **ณัฐภัทร วิศิษฏ์เจริญ (Nattapat Wisitcharoen)**
 - **วรากร มาตุเรศ (Varakorn Matures)**
-- **ราชวัลลภ เนาว์เพชร์ (Ratchawanlop Naopech)**
+- **ราชวัลลภ เนาว์เพ็ชร์ (Ratchawanlop Naopech)**
