@@ -72,7 +72,7 @@
 
 ## 👨‍💻 Developer
 
-- **ศุภชัย (Supachai)**
-- **ณัฐภัทร (Nuttapat)**
-- **วรากร (Varakorn)**
-- **ราชวัลลภ (Ratchawanlop)**
+- **ศุภชัย สังข์ศิรินทร์ (Supachai Sungsirin)**
+- **ณัฐภัทร วิศิษฏ์เจริญ (Nattapat Wisitcharoen)**
+- **วรากร มาตุเรศ (Varakorn Matures)**
+- **ราชวัลลภ เนาว์เพชร์ (Ratchawanlop Naopech)**
