@@ -1,2 +1,2 @@
 # Daily-News
-##Test
+##Tests
