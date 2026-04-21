@@ -73,5 +73,6 @@
 ## 👨‍💻 Developer
 
 **ศุภชัย (Supachai)**
-Computer Science Student @ SPU
-*Passionate about Full-Stack Development, AI, and Process Automation.*
+**ณัฐภัทร (Nuttapat)**
+**วรากร (Varakorn)**
+**ราชวัลลภ (Ratchawanlop)**
