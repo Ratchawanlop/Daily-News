@@ -70,6 +70,72 @@
 
 ---
 
+## Flowchart
+flowchart TB
+
+%% =========================
+%% STYLE DEFINITIONS
+%% =========================
+classDef startEnd fill:#2d3436,stroke:#2d3436,color:#ffffff;
+classDef process fill:#74b9ff,stroke:#0984e3,color:#000;
+classDef decision fill:#ffeaa7,stroke:#d35400,color:#000;
+classDef ai fill:#a29bfe,stroke:#6c5ce7,color:#000;
+classDef db fill:#55efc4,stroke:#00b894,color:#000;
+classDef api fill:#fab1a0,stroke:#e17055,color:#000;
+classDef output fill:#81ecec,stroke:#00cec9,color:#000;
+
+%% =========================
+%% USER FLOW (VERTICAL)
+%% =========================
+subgraph U["👤 User Query Flow"]
+direction TB
+    U1((เริ่มต้น)):::startEnd
+    U2[รับข้อความจาก LINE]:::api
+    U3{ตรวจสอบคำสั่ง}:::decision
+
+    U4[ตอบกลับแบบสำเร็จรูป]:::process
+    U5[แปลงคำถามเป็นเวกเตอร์]:::process
+    UDB[(Pinecone Vector DB)]:::db
+    U6[ดึงข้อมูล RAG]:::process
+    U7[AI ตอบคำถาม]:::ai
+    U8[จัดรูปแบบข้อความ]:::process
+
+    U10(( )):::startEnd
+    U9[ส่งข้อความกลับ LINE]:::output
+    U11((สิ้นสุด)):::startEnd
+
+    U1 --> U2 --> U3
+    U3 -->|ทั่วไป| U4 --> U10
+    U3 -->|ถามข่าว| U5 --> UDB --> U6 --> U7 --> U8 --> U10
+    U10 --> U9 --> U11
+end
+
+%% =========================
+%% SCHEDULE FLOW (VERTICAL)
+%% =========================
+subgraph S["⏰ Schedule Flow"]
+direction TB
+    S1((เริ่มต้น)):::startEnd
+    S2[ตั้งเวลาอัตโนมัติ]:::process
+    S3[เรียก News API]:::api
+    S4[คัดกรองข่าว]:::process
+    S5[AI สรุปข่าว]:::ai
+
+    S6[สร้างเวกเตอร์]:::process
+    SDB[(Pinecone Vector DB)]:::db
+
+    S7[จัดรูปแบบ Flex]:::process
+    S8[ส่งผ่าน LINE]:::output
+    S9((สิ้นสุด)):::startEnd
+
+    S1 --> S2 --> S3 --> S4 --> S5
+    S5 --> S6 --> SDB
+    S5 --> S7 --> S8 --> S9
+end
+
+
+---
+
 ## 👨‍💻 Developer
 
 - **ศุภชัย สังข์ศิรินทร์ (Supachai Sungsirin)**
