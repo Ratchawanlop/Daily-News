@@ -1,0 +1,299 @@
+{
+  "name": "Daily Chat Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "line-bot",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        64
+      ],
+      "id": "0c3c69d4-ca99-4318-a0a0-015bd711626f",
+      "name": "Webhook",
+      "webhookId": "8f27ee46-d270-4a2a-af4d-67ae836ad758"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=คำถามจากผู้ใช้งาน: {{ $('Webhook').item.json.body.events[0].message.text }}\n\n---\nคำสั่งเพิ่มเติมในการตอบ (System Instructions):\n1. ให้ตอบเป็นภาษาไทย สรุปใจความสำคัญให้กระชับและตรงประเด็น\n2. ห้ามใช้รูปแบบตาราง (Markdown Table) หรือสัญลักษณ์ | ในการตอบเด็ดขาด\n3. หากมีการจัดอันดับหรือมีหลายหัวข้อ ให้ใช้สัญลักษณ์ Bullet Points (•) หรือตัวเลขแทน\n4. จัดหน้ากระดาษให้อ่านง่ายบนหน้าจอมือถือ เว้นบรรทัด (Enter) เมื่อขึ้นหัวข้อใหม่\n5. เพิ่ม Emoji ที่เข้ากับบริบทเล็กน้อยเพื่อให้ข้อความดูน่าอ่านและเป็นมิตร\n6. **กฎเหล็กสำคัญ:** หากในข้อมูลข่าว (Context) ไม่มีเนื้อหาที่เกี่ยวข้องกับคำถามเลย ห้ามแต่งเรื่องเองหรือดึงข้อมูลจากอดีตมาตอบเด็ดขาด ให้ตอบกลับอย่างสุภาพว่า \"วันนี้ยังไม่มีข่าวสารอัปเดตเกี่ยวกับหัวข้อนี้ครับ 📉 รอติดตามการอัปเดตในวันพรุ่งนี้นะครับ!\"",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "typeVersion": 1.7,
+      "position": [
+        240,
+        320
+      ],
+      "id": "37aa0b39-0779-417b-a355-2444bfb84c11",
+      "name": "Question and Answer Chain"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
+      "typeVersion": 1,
+      "position": [
+        336,
+        544
+      ],
+      "id": "939dcf46-12aa-4725-9243-4a249f22d892",
+      "name": "Vector Store Retriever"
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "daily-news-hf",
+          "mode": "list",
+          "cachedResultName": "daily-news-hf"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        752
+      ],
+      "id": "9b3ed3fd-a6bf-4e9e-bce4-5fb6ba8936a9",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "08HlgHd2dxP6ifPL",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "sentence-transformers/all-MiniLM-L6-v2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        416,
+        960
+      ],
+      "id": "2f0256d2-de4c-4a56-a631-e7c5af3f9358",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "rPNIjRWUJSKtLfQh",
+          "name": "HuggingFaceApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $('Webhook').item.json.body.events[0].replyToken }}\",\n  \"messages\": [\n    {\n      \"type\": \"flex\",\n      \"altText\": \"🤖 AI ตอบคำถามของคุณแล้ว\",\n      \"contents\": {\n        \"type\": \"bubble\",\n        \"size\": \"mega\",\n        \"header\": {\n          \"type\": \"box\",\n          \"layout\": \"horizontal\",\n          \"backgroundColor\": \"#0D1B2A\",\n          \"paddingTop\": \"14px\",\n          \"paddingBottom\": \"14px\",\n          \"paddingStart\": \"16px\",\n          \"paddingEnd\": \"16px\",\n          \"contents\": [\n            {\n              \"type\": \"box\",\n              \"layout\": \"vertical\",\n              \"contents\": [],\n              \"width\": \"3px\",\n              \"backgroundColor\": \"#C9A84C\",\n              \"cornerRadius\": \"2px\"\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"AI วิเคราะห์ข่าว\",\n              \"color\": \"#C9A84C\",\n              \"size\": \"xs\",\n              \"weight\": \"bold\",\n              \"margin\": \"sm\",\n              \"flex\": 1\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"ANALYSIS\",\n              \"color\": \"#7A8FA6\",\n              \"size\": \"xxs\",\n              \"align\": \"end\"\n            }\n          ]\n        },\n        \"body\": {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"backgroundColor\": \"#FFFFFF\",\n          \"paddingTop\": \"16px\",\n          \"paddingBottom\": \"16px\",\n          \"paddingStart\": \"16px\",\n          \"paddingEnd\": \"16px\",\n          \"spacing\": \"md\",\n          \"contents\": [\n            {\n              \"type\": \"text\",\n              \"text\": {{ JSON.stringify($json.response) }},\n              \"wrap\": true,\n              \"size\": \"sm\",\n              \"color\": \"#1A2A3A\",\n              \"lineSpacing\": \"6px\"\n            }\n          ]\n        },\n        \"footer\": {\n          \"type\": \"box\",\n          \"layout\": \"horizontal\",\n          \"backgroundColor\": \"#F4F6F9\",\n          \"paddingTop\": \"10px\",\n          \"paddingBottom\": \"10px\",\n          \"paddingStart\": \"16px\",\n          \"paddingEnd\": \"16px\",\n          \"contents\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"⚡ Powered by AI\",\n              \"size\": \"xxs\",\n              \"color\": \"#7A8FA6\",\n              \"flex\": 1\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"▌ Economy Report\",\n              \"size\": \"xxs\",\n              \"color\": \"#C9A84C\",\n              \"align\": \"end\"\n            }\n          ]\n        }\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        704,
+        320
+      ],
+      "id": "1b6d64c0-9ad3-424a-82cc-0e4962f6f0d3",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "IyuhOQUVf2P8XX4T",
+          "name": "Bearer Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        208,
+        544
+      ],
+      "id": "9f10bf04-bd1f-428e-a632-d29fd43151c9",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "xqquQzLycH1Kxnc1",
+          "name": "Ollama account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9a564a50-96e8-4571-bc72-c8619d015e6b",
+              "leftValue": "=={{ $json.body.events[0].message.text }}",
+              "rightValue": "วิธีใช้งานบอทนี้",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -16,
+        64
+      ],
+      "id": "6707bf25-35da-4cc0-aab7-a283f912d0a0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"replyToken\": \"{{ $('Webhook').item.json.body.events[0].replyToken }}\",\n  \"messages\": [\n    {\n      \"type\": \"flex\",\n      \"altText\": \"🤖 คู่มือการใช้งานผู้ช่วยวิเคราะห์ข่าว\",\n      \"contents\": {\n        \"type\": \"bubble\",\n        \"size\": \"mega\",\n        \"header\": {\n          \"type\": \"box\",\n          \"layout\": \"horizontal\",\n          \"backgroundColor\": \"#0D1B2A\",\n          \"paddingTop\": \"18px\",\n          \"paddingBottom\": \"18px\",\n          \"paddingStart\": \"16px\",\n          \"paddingEnd\": \"16px\",\n          \"contents\": [\n            {\n              \"type\": \"box\",\n              \"layout\": \"vertical\",\n              \"contents\": [],\n              \"width\": \"3px\",\n              \"backgroundColor\": \"#C9A84C\",\n              \"cornerRadius\": \"2px\"\n            },\n            {\n              \"type\": \"box\",\n              \"layout\": \"vertical\",\n              \"margin\": \"sm\",\n              \"flex\": 1,\n              \"contents\": [\n                {\n                  \"type\": \"text\",\n                  \"text\": \"BUSINESS ASSISTANT\",\n                  \"color\": \"#C9A84C\",\n                  \"size\": \"xs\",\n                  \"weight\": \"bold\"\n                },\n                {\n                  \"type\": \"text\",\n                  \"text\": \"ผู้ช่วยวิเคราะห์ข่าวเศรษฐกิจ\",\n                  \"color\": \"#FFFFFF\",\n                  \"size\": \"sm\",\n                  \"weight\": \"bold\",\n                  \"margin\": \"xs\"\n                }\n              ]\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"🤖\",\n              \"size\": \"xl\",\n              \"align\": \"end\"\n            }\n          ]\n        },\n        \"body\": {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"backgroundColor\": \"#FFFFFF\",\n          \"paddingTop\": \"16px\",\n          \"paddingBottom\": \"16px\",\n          \"paddingStart\": \"16px\",\n          \"paddingEnd\": \"16px\",\n          \"spacing\": \"md\",\n          \"contents\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"ยินดีต้อนรับครับ 👋\",\n              \"weight\": \"bold\",\n              \"size\": \"md\",\n              \"color\": \"#0D1B2A\"\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"ผมจะอัปเดตสรุปข่าวเศรษฐกิจให้คุณทุกๆ เช้าเวลา 07:00 น. และพร้อมตอบคำถามตลอดเวลาครับ\",\n              \"wrap\": true,\n              \"size\": \"sm\",\n              \"color\": \"#4A5568\",\n              \"lineSpacing\": \"5px\"\n            },\n            {\n              \"type\": \"separator\",\n              \"color\": \"#E8EDF2\"\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"วิธีใช้งาน\",\n              \"weight\": \"bold\",\n              \"size\": \"xs\",\n              \"color\": \"#C9A84C\"\n            },\n            {\n              \"type\": \"box\",\n              \"layout\": \"horizontal\",\n              \"spacing\": \"sm\",\n              \"contents\": [\n                {\n                  \"type\": \"box\",\n                  \"layout\": \"vertical\",\n                  \"contents\": [],\n                  \"width\": \"2px\",\n                  \"backgroundColor\": \"#C9A84C\",\n                  \"cornerRadius\": \"2px\"\n                },\n                {\n                  \"type\": \"text\",\n                  \"text\": \"👇 กดปุ่มเมนูด้านล่าง เพื่อดูสรุปข่าวเด่น หรือข่าวการลงทุน\",\n                  \"wrap\": true,\n                  \"size\": \"sm\",\n                  \"color\": \"#1A2A3A\",\n                  \"lineSpacing\": \"4px\"\n                }\n              ]\n            },\n            {\n              \"type\": \"box\",\n              \"layout\": \"horizontal\",\n              \"spacing\": \"sm\",\n              \"contents\": [\n                {\n                  \"type\": \"box\",\n                  \"layout\": \"vertical\",\n                  \"contents\": [],\n                  \"width\": \"2px\",\n                  \"backgroundColor\": \"#7A8FA6\",\n                  \"cornerRadius\": \"2px\"\n                },\n                {\n                  \"type\": \"text\",\n                  \"text\": \"⌨️ พิมพ์ถามเรื่องที่สนใจ เช่น \\\"วันนี้มีข่าว Apple ไหม?\\\" หรือ \\\"สรุปข่าวดอกเบี้ยให้หน่อย\\\"\",\n                  \"wrap\": true,\n                  \"size\": \"sm\",\n                  \"color\": \"#1A2A3A\",\n                  \"lineSpacing\": \"4px\"\n                }\n              ]\n            }\n          ]\n        },\n        \"footer\": {\n          \"type\": \"box\",\n          \"layout\": \"vertical\",\n          \"backgroundColor\": \"#0D1B2A\",\n          \"paddingTop\": \"12px\",\n          \"paddingBottom\": \"12px\",\n          \"paddingStart\": \"16px\",\n          \"paddingEnd\": \"16px\",\n          \"spacing\": \"xs\",\n          \"contents\": [\n            {\n              \"type\": \"button\",\n              \"style\": \"primary\",\n              \"height\": \"sm\",\n              \"color\": \"#C9A84C\",\n              \"action\": {\n                \"type\": \"message\",\n                \"label\": \"📰  ดูข่าวเด่นวันนี้\",\n                \"text\": \"สรุปข่าวเศรษฐกิจและธุรกิจทั้งหมดของวันนี้ให้หน่อย\"\n              }\n            },\n            {\n              \"type\": \"button\",\n              \"style\": \"link\",\n              \"height\": \"sm\",\n              \"color\": \"#7A8FA6\",\n              \"action\": {\n                \"type\": \"message\",\n                \"label\": \"📈  ดูข่าวการลงทุน\",\n                \"text\": \"มีข่าวอะไรน่าสนใจเกี่ยวกับตลาดหุ้นหรือกองทุนบ้าง?\"\n              }\n            }\n          ]\n        }\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        352,
+        -192
+      ],
+      "id": "947f37b4-921d-4b6c-ae83-6fcd43f0be8e",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "IyuhOQUVf2P8XX4T",
+          "name": "Bearer Auth account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Retriever": {
+      "ai_retriever": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_retriever",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Retriever",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question and Answer Chain": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "987e75b6-0346-49e4-8169-d9d3bece149c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6ea936472e83d981fde2e1f0a8b6d61fe0dc6b54f3a7d1b0fae6f08b4334cee"
+  },
+  "id": "eBwLYgYp2G4XQ5kd",
+  "tags": []
+}

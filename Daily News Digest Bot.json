@@ -1,0 +1,500 @@
+{
+  "name": "Daily News Digest Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            },
+            {
+              "triggerAtHour": 12
+            },
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        32,
+        160
+      ],
+      "id": "1924db4f-97da-4e6a-88ac-845e3078dd9f",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "url": "=https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=6047fea47a264188b3f1f36d0d70fc62",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        256,
+        160
+      ],
+      "id": "d017d962-d08b-4d97-b7fc-0a8fd9a1377a",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "=articles",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        160
+      ],
+      "id": "7d9a05f8-6bd5-4502-b1e2-dd23cd5d4032",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "05ae7a48-039d-497d-b42d-1060ca9fde4b",
+              "leftValue": "={{ $json.title }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "903b7d4f-06c8-4833-8aac-ffa4051773ec",
+              "leftValue": "={{ $json.title }}",
+              "rightValue": "[Removed]",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        160
+      ],
+      "id": "548be35c-554b-4a41-a1fa-2e974b0b5a35",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "title",
+              "renameField": true,
+              "outputFieldName": "title"
+            },
+            {
+              "fieldToAggregate": "url",
+              "renameField": true,
+              "outputFieldName": "url"
+            },
+            {
+              "fieldToAggregate": "image",
+              "renameField": true,
+              "outputFieldName": "image"
+            },
+            {
+              "fieldToAggregate": "=text"
+            }
+          ]
+        },
+        "options": {
+          "includeBinaries": false
+        }
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        160
+      ],
+      "id": "b758f543-026e-4b42-91ac-5ae7f24e6e4b",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=คุณคือนักวิเคราะห์เศรษฐกิจและการเงินระดับโลก หน้าที่ของคุณคือสรุปข่าวเศรษฐกิจต่อไปนี้ให้ผู้บริหารหรือนักลงทุนอ่าน ให้สรุปเป็นภาษาไทย สั้น กระชับ จับใจความสำคัญว่าเกิดอะไรขึ้น และส่งผลกระทบอย่างไร ภายใน 2-3 ประโยค ห้ามมีคำเกริ่นนำ ห้ามพิมพ์อารัมภบท ให้ตอบกลับมาเฉพาะเนื้อหาที่สรุปแล้วเท่านั้น\n\nหัวข้อข่าว: {{ $json.title }}\nรายละเอียด: {{ $json.description }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1152,
+        160
+      ],
+      "id": "c1f62e15-78f2-40ea-af59-4cde4a763969",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        384
+      ],
+      "id": "1b107401-0e72-449c-8c81-a8879c285401",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "xqquQzLycH1Kxnc1",
+          "name": "Ollama account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let json = $input.all()[0].json;\nlet summaries = json.summary || json.text || [];\nlet titles = json.title || [];\nlet urls = json.url || [];\nlet images = json.image || [];\nlet bubbles = [];\n\nlet maxItems = Math.min(titles.length, 10);\n\nfor (let i = 0; i < maxItems; i++) {\n    let title = titles[i] || \"อัปเดตข่าวเศรษฐกิจ\";\n    let summary = summaries[i] || \"ไม่มีบทสรุปสำหรับข่าวนี้\";\n    let url = urls[i] || \"https://newsapi.org\";\n    let imageUrl = images[i] || \"https://cdn-icons-png.flaticon.com/512/2965/2965879.png\";\n\n    let shareText = encodeURIComponent(`📰 ข่าวที่น่าสนใจ:\\n${title}\\n\\nอ่านต่อที่: ${url}`);\n    let shareLink = `https://line.me/R/msg/text/?${shareText}`;\n\n    let bubble = {\n        \"type\": \"bubble\",\n        \"size\": \"mega\",\n        \"hero\": {\n            \"type\": \"box\",\n            \"layout\": \"vertical\",\n            \"contents\": [\n                {\n                    \"type\": \"image\",\n                    \"url\": imageUrl,\n                    \"size\": \"full\",\n                    \"aspectRatio\": \"20:13\",\n                    \"aspectMode\": \"cover\",\n                    \"action\": { \"type\": \"uri\", \"uri\": url }\n                },\n                {\n                    // Dark overlay strip at bottom of hero\n                    \"type\": \"box\",\n                    \"layout\": \"horizontal\",\n                    \"contents\": [\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"▌ BUSINESS NEWS\",\n                            \"size\": \"xxs\",\n                            \"color\": \"#C9A84C\",\n                            \"weight\": \"bold\",\n                            \"flex\": 1\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": \"ECONOMY\",\n                            \"size\": \"xxs\",\n                            \"color\": \"#AAAAAA\",\n                            \"align\": \"end\"\n                        }\n                    ],\n                    \"backgroundColor\": \"#0D1B2A\",\n                    \"paddingStart\": \"14px\",\n                    \"paddingEnd\": \"14px\",\n                    \"paddingTop\": \"8px\",\n                    \"paddingBottom\": \"8px\",\n                    \"position\": \"absolute\",\n                    \"offsetBottom\": \"0px\",\n                    \"offsetStart\": \"0px\",\n                    \"offsetEnd\": \"0px\"\n                }\n            ]\n        },\n        \"body\": {\n            \"type\": \"box\",\n            \"layout\": \"vertical\",\n            \"backgroundColor\": \"#FFFFFF\",\n            \"paddingTop\": \"14px\",\n            \"paddingBottom\": \"6px\",\n            \"paddingStart\": \"16px\",\n            \"paddingEnd\": \"16px\",\n            \"spacing\": \"sm\",\n            \"contents\": [\n                {\n                    // Gold accent bar + title row\n                    \"type\": \"box\",\n                    \"layout\": \"horizontal\",\n                    \"contents\": [\n                        {\n                            \"type\": \"box\",\n                            \"layout\": \"vertical\",\n                            \"contents\": [],\n                            \"width\": \"3px\",\n                            \"backgroundColor\": \"#C9A84C\",\n                            \"cornerRadius\": \"2px\"\n                        },\n                        {\n                            \"type\": \"text\",\n                            \"text\": title,\n                            \"weight\": \"bold\",\n                            \"size\": \"md\",\n                            \"color\": \"#0D1B2A\",\n                            \"wrap\": true,\n                            \"maxLines\": 3,\n                            \"lineSpacing\": \"4px\",\n                            \"margin\": \"sm\"\n                        }\n                    ],\n                    \"spacing\": \"sm\"\n                },\n                {\n                    \"type\": \"separator\",\n                    \"margin\": \"sm\",\n                    \"color\": \"#E8EDF2\"\n                },\n                {\n                    \"type\": \"text\",\n                    \"text\": summary,\n                    \"size\": \"sm\",\n                    \"color\": \"#4A5568\",\n                    \"wrap\": true,\n                    \"maxLines\": 4,\n                    \"lineSpacing\": \"3px\",\n                    \"margin\": \"sm\"\n                }\n            ]\n        },\n        \"footer\": {\n            \"type\": \"box\",\n            \"layout\": \"vertical\",\n            \"backgroundColor\": \"#0D1B2A\",\n            \"paddingTop\": \"12px\",\n            \"paddingBottom\": \"12px\",\n            \"paddingStart\": \"16px\",\n            \"paddingEnd\": \"16px\",\n            \"spacing\": \"xs\",\n            \"contents\": [\n                {\n                    \"type\": \"button\",\n                    \"style\": \"primary\",\n                    \"height\": \"sm\",\n                    \"color\": \"#C9A84C\",\n                    \"action\": {\n                        \"type\": \"uri\",\n                        \"label\": \"อ่านรายงานฉบับเต็ม\",\n                        \"uri\": url\n                    }\n                },\n                {\n                    \"type\": \"button\",\n                    \"style\": \"link\",\n                    \"height\": \"sm\",\n                    \"color\": \"#7A8FA6\",\n                    \"action\": {\n                        \"type\": \"uri\",\n                        \"label\": \"↗  ส่งต่อให้เพื่อนร่วมงาน\",\n                        \"uri\": shareLink\n                    }\n                }\n            ]\n        }\n    };\n\n    bubbles.push(bubble);\n}\n\nlet linePayload = {\n    \"to\": \"C209a38b643f0ff6e84ca40e86c44e133\",\n    \"messages\": [\n        {\n            \"type\": \"flex\",\n            \"altText\": \"📊 รายงานข่าวธุรกิจประจำวัน\",\n            \"contents\": {\n                \"type\": \"carousel\",\n                \"contents\": bubbles\n            }\n        }\n    ]\n};\n\nreturn [{ json: linePayload }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        0
+      ],
+      "id": "33af3156-2bd3-4c6d-a433-bdf28435e973",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2304,
+        0
+      ],
+      "id": "44e8ec3b-b1fe-4136-8193-aa4a0e0b0f42",
+      "name": "HTTP Request3",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "IyuhOQUVf2P8XX4T",
+          "name": "Bearer Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        704,
+        160
+      ],
+      "id": "10399857-e67a-4a0f-9019-37d95a1849d2",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7ff9258d-ad28-4b56-a661-db337aec9d42",
+              "name": "title",
+              "value": "={{ $('If').item.json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "ff08b0ba-0b7d-41f1-8ffe-ee1e609a09db",
+              "name": "url",
+              "value": "={{ $('If').item.json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "9680aaef-41f1-4a44-95f7-39476e5fbda7",
+              "name": "image",
+              "value": "={{ $('If').item.json.urlToImage }}",
+              "type": "string"
+            },
+            {
+              "id": "f2e12f39-cd7c-4ef3-a0f8-e5accf0fea77",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        160
+      ],
+      "id": "6577981f-d6e4-4743-b2b1-c97a8fd01790",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "daily-news-hf",
+          "mode": "list",
+          "cachedResultName": "daily-news-hf"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        1952,
+        304
+      ],
+      "id": "332b1659-f359-4128-ba49-7dd4dcdfed8f",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "08HlgHd2dxP6ifPL",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "title",
+                "value": "=\"{{ $json.title }}\""
+              },
+              {
+                "name": "url",
+                "value": "=\"{{ $json.url }}\""
+              },
+              {
+                "name": "image",
+                "value": "={{ $json.image }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        2096,
+        528
+      ],
+      "id": "d813aabd-3755-41af-b227-6634831d08d3",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "modelName": "sentence-transformers/all-MiniLM-L6-v2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        528
+      ],
+      "id": "3d5f11c8-9995-4569-867e-513886c696a2",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "rPNIjRWUJSKtLfQh",
+          "name": "HuggingFaceApi account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "67778aeb-5d38-4ace-b18a-09da3250ba77",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6ea936472e83d981fde2e1f0a8b6d61fe0dc6b54f3a7d1b0fae6f08b4334cee"
+  },
+  "id": "8RLzLsGoHhoe8vZC",
+  "tags": []
+}
