@@ -70,37 +70,6 @@
 
 ---
 
-## Flowchart
-flowchart TB
-
-classDef startEnd fill:#2d3436,stroke:#2d3436,color:#ffffff;
-classDef process fill:#74b9ff,stroke:#0984e3,color:#000;
-classDef decision fill:#ffeaa7,stroke:#d35400,color:#000;
-classDef ai fill:#a29bfe,stroke:#6c5ce7,color:#000;
-classDef db fill:#55efc4,stroke:#00b894,color:#000;
-classDef api fill:#fab1a0,stroke:#e17055,color:#000;
-classDef output fill:#81ecec,stroke:#00cec9,color:#000;
-
-subgraph U[User Query Flow]
-direction TB
-    U1((Start)):::startEnd --> U2[Receive LINE Message]:::api --> U3{Check Command}:::decision
-
-    U3 -->|General| U4[Static Response]:::process --> U10(( )):::startEnd
-    U3 -->|Ask News| U5[Create Embedding]:::process --> UDB[(Pinecone DB)]:::db --> U6[Retrieve RAG]:::process --> U7[AI Answer]:::ai --> U8[Format Text]:::process --> U10
-
-    U10 --> U9[Reply LINE]:::output --> U11((End)):::startEnd
-end
-
-subgraph S[Schedule Flow]
-direction TB
-    S1((Start)):::startEnd --> S2[Schedule Trigger]:::process --> S3[Call News API]:::api --> S4[Filter News]:::process --> S5[AI Summarize]:::ai
-
-    S5 --> S6[Create Embedding]:::process --> SDB[(Pinecone DB)]:::db
-    S5 --> S7[Format Flex]:::process --> S8[Push LINE]:::output --> S9((End)):::startEnd
-end
-
----
-
 ## 👨‍💻 Developer
 
 - **ศุภชัย สังข์ศิรินทร์ (Supachai Sungsirin)**
